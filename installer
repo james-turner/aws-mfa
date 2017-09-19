@@ -6,23 +6,23 @@ curl https://raw.githubusercontent.com/james-turner/aws-mfa/master/mfa_login -o 
 echo ""
 echo "Writing .aws-mfa file to $HOME"
 FILE=$HOME/.aws-mfa
-cat > $FILE <<- EOM
+cat > $FILE <<'EOM'
 #!/usr/bin/env bash
 
 # override to facilitate sts login if required
 aws(){
   NOW="$(date +%s)"
-  if [[ ! -e "\$HOME/.aws_sts_credentials" || "\$NOW" > "\$AWS_SESSION_EXPIRATION" ]]; then
-    \$HOME/.aws/mfa_login
+  if [[ ! -e "$HOME/.aws_sts_credentials" || "$NOW" > "$AWS_SESSION_EXPIRATION" ]]; then
+    $HOME/.aws/mfa_login
   fi
-  source \$HOME/.aws_sts_credentials
+  source $HOME/.aws_sts_credentials
   /usr/local/bin/aws "$@";
 }
 EOM
 echo ""
 echo "Updating .bash_profile" 
 echo "source ~/.aws-mfa" >> ~/.bash_profile
-
+echo ""
 echo "Setup complete"
 echo ""
 echo "You can now run normal aws commands such as 'aws ec2 describe-instances and you will get prompted for your mfa token'"
