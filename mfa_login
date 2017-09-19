@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+unset AWS_SESSION_TOKEN
+unset AWS_SESSION_EXPIRATION
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_ACCESS_KEY_ID
+
+MFA_ARN="$(aws --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print resp['MFADevices'][0]['SerialNumber']")"
+echo "Using device: $MFA_ARN"
+
+echo "Enter your mfa code:"
+read CODE
+
+SESSION_TOKEN_INFO="$(aws --output json sts get-session-token --serial-number $MFA_ARN --token-code $CODE)"
+
+cat > /tmp/mfa_login_py <<- EOF
+try:
+  import json,sys,time,datetime
+  resp=json.load(sys.stdin)
+  print "export AWS_SECRET_ACCESS_KEY={}\nexport AWS_ACCESS_KEY_ID={}\nexport AWS_SESSION_TOKEN={}\nexport AWS_SESSION_EXPIRATION={}".format(resp['Credentials']['SecretAccessKey'],resp['Credentials']['AccessKeyId'],resp['Credentials']['SessionToken'],time.mktime(datetime.datetime.strptime(resp['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ').timetuple()))
+except:
+  sys.exit(1)
+EOF
+
+#echo $SESSION_TOKEN_INFO | python -c "import json,sys,time,datetime;resp=json.load(sys.stdin);print \"export AWS_SECRET_ACCESS_KEY={}\nexport AWS_ACCESS_KEY_ID={}\nexport AWS_SESSION_TOKEN={}\nexport AWS_SESSION_EXPIRATION={}\".format(resp['Credentials']['SecretAccessKey'],resp['Credentials']['AccessKeyId'],resp['Credentials']['SessionToken'],time.mktime(datetime.datetime.strptime(resp['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ').timetuple()))" > ~/.aws_sts_credentials
+
+echo $SESSION_TOKEN_INFO | python /tmp/mfa_login_py > ~/.aws_sts_credentials
+
+if [[ $? -eq 0 ]]; then
+echo "Credentials updated"
+else
+cat > $HOME/.aws_sts_credentials <<- EOM
+unset AWS_SESSION_TOKEN
+unset AWS_SESSION_EXPIRATION
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_ACCESS_KEY_ID
+EOM
+fi
+
