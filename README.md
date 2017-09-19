@@ -10,3 +10,13 @@ You require python installed (any version should be fine - submit a PR fix if no
 
 
 Now you can run the normal aws commands and you'll get prompted for MFA if your current token has expired.
+
+Expected output should look something like this:
+
+
+    $> aws ec2 describe-instances
+    Using device: arn:aws:iam::ACCOUNT_NUMER:mfa/USERNAME
+    Enter your mfa code:
+    XXXXXX
+    Credentials updated
+    ...
