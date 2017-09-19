@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 echo "Appending mfa_login file to $HOME/.aws/"
+echo ""
 curl https://raw.githubusercontent.com/james-turner/aws-mfa/master/mfa_login -o $HOME/.aws/mfa_login
-
+echo ""
 echo "Writing .aws-mfa file to $HOME"
 FILE=$HOME/.aws-mfa
 cat > $FILE <<- EOM
@@ -18,7 +19,7 @@ aws(){
   /usr/local/bin/aws "$@";
 }
 EOM
-
+echo ""
 echo "Updating .bash_profile" 
 echo "source ~/.aws-mfa" >> ~/.bash_profile
 
