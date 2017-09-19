@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+echo "Appending mfa_login file to $HOME/.aws/"
 curl https://raw.githubusercontent.com/james-turner/aws-mfa/master/mfa_login -o $HOME/.aws/mfa_login
 
+echo "Writing .aws-mfa file to $HOME"
 FILE=$HOME/.aws-mfa
 cat > $FILE <<- EOM
 #!/usr/bin/env bash
@@ -17,4 +19,9 @@ aws(){
 }
 EOM
 
+echo "Updating .bash_profile" 
 echo "source ~/.aws-mfa" >> ~/.bash_profile
+
+echo "Setup complete"
+echo ""
+echo "You can now run normal aws commands such as 'aws ec2 describe-instances and you will get prompted for your mfa token'"
