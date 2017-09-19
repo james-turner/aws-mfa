@@ -17,7 +17,7 @@ aws(){
     $HOME/.aws/mfa_login
   fi
   source $HOME/.aws_sts_credentials
-  aws "$@";
+  command aws "$@";
 }
 EOM
 echo ""
