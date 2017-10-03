@@ -5,13 +5,29 @@ unset AWS_SESSION_EXPIRATION
 unset AWS_SECRET_ACCESS_KEY
 unset AWS_ACCESS_KEY_ID
 
+ARGS="$@"
+while (( "$#" )); do
+  case "$1" in
+    --profile ) PROFILE=$2; shift 2;;
+    * ) shift ;;
+  esac
+done
+
+if [ -z $PROFILE ]; then
 MFA_ARN="$(aws --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print resp['MFADevices'][0]['SerialNumber']")"
+else
+MFA_ARN="$(aws --profile $PROFILE --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print resp['MFADevices'][0]['SerialNumber']")"
+fi
 echo "Using device: $MFA_ARN"
 
 echo "Enter your mfa code:"
 read CODE
 
+if [ -z $PROFILE ]; then
 SESSION_TOKEN_INFO="$(aws --output json sts get-session-token --serial-number $MFA_ARN --token-code $CODE)"
+else
+SESSION_TOKEN_INFO="$(aws --profile $PROFILE --output json sts get-session-token --serial-number $MFA_ARN --token-code $CODE)"
+fi
 
 cat > /tmp/mfa_login_py <<- EOF
 try:
@@ -21,8 +37,6 @@ try:
 except:
   sys.exit(1)
 EOF
-
-#echo $SESSION_TOKEN_INFO | python -c "import json,sys,time,datetime;resp=json.load(sys.stdin);print \"export AWS_SECRET_ACCESS_KEY={}\nexport AWS_ACCESS_KEY_ID={}\nexport AWS_SESSION_TOKEN={}\nexport AWS_SESSION_EXPIRATION={}\".format(resp['Credentials']['SecretAccessKey'],resp['Credentials']['AccessKeyId'],resp['Credentials']['SessionToken'],time.mktime(datetime.datetime.strptime(resp['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ').timetuple()))" > ~/.aws_sts_credentials
 
 echo $SESSION_TOKEN_INFO | python /tmp/mfa_login_py > ~/.aws_sts_credentials
 
