@@ -14,9 +14,9 @@ while (( "$#" )); do
 done
 
 if [ -z $PROFILE ]; then
-MFA_ARN="$(aws --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print resp['MFADevices'][0]['SerialNumber']")"
+MFA_ARN="$(aws --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print(resp['MFADevices'][0]['SerialNumber'])")"
 else
-MFA_ARN="$(aws --profile $PROFILE --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print resp['MFADevices'][0]['SerialNumber']")"
+MFA_ARN="$(aws --profile $PROFILE --output json iam list-mfa-devices | python -c "import json,sys;resp = json.load(sys.stdin);print(resp['MFADevices'][0]['SerialNumber'])")"
 fi
 echo "Using device: $MFA_ARN"
 
@@ -33,7 +33,7 @@ cat > /tmp/mfa_login_py <<- EOF
 try:
   import json,sys,time,datetime
   resp=json.load(sys.stdin)
-  print "export AWS_SECRET_ACCESS_KEY={}\nexport AWS_ACCESS_KEY_ID={}\nexport AWS_SESSION_TOKEN={}\nexport AWS_SESSION_EXPIRATION={}".format(resp['Credentials']['SecretAccessKey'],resp['Credentials']['AccessKeyId'],resp['Credentials']['SessionToken'],time.mktime(datetime.datetime.strptime(resp['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ').timetuple()))
+  print("export AWS_SECRET_ACCESS_KEY={}\nexport AWS_ACCESS_KEY_ID={}\nexport AWS_SESSION_TOKEN={}\nexport AWS_SESSION_EXPIRATION={}".format(resp['Credentials']['SecretAccessKey'],resp['Credentials']['AccessKeyId'],resp['Credentials']['SessionToken'],time.mktime(datetime.datetime.strptime(resp['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ').timetuple())))
 except:
   sys.exit(1)
 EOF
